@@ -16,7 +16,6 @@ func main() {
 }
 
 func part1(report []string) int64 {
-	// Process input
 	oneCounts := make([]int, len(report[0]))
 	for _, line := range report {
 		for i, num := range line {
@@ -26,7 +25,6 @@ func part1(report []string) int64 {
 		}
 	}
 
-	// Gamma rate and epsilon rate
 	gammaBinary := ""
 	epsilonBinary := ""
 	limit := len(report) / 2
@@ -40,7 +38,6 @@ func part1(report []string) int64 {
 		}
 	}
 
-	// Power consumption
 	gammaDecimal, _ := strconv.ParseInt(gammaBinary, 2, 64)
 	epsilonDecimal, _ := strconv.ParseInt(epsilonBinary, 2, 64)
 
@@ -48,17 +45,33 @@ func part1(report []string) int64 {
 }
 
 func part2(report []string) int64 {
-	oxygen := getRating(report, '1', '0')
-	co2 := getRating(report, '0', '1')
+	oxygen := getRating(report, mostCommon)
+	co2 := getRating(report, leastCommon)
 
 	return oxygen * co2
 }
 
-func getRating(report []string, mostCommon byte, leastCommon byte) int64 {
+func mostCommon(oneCount int, zeroCount int) byte {
+	if oneCount >= zeroCount {
+		return '1'
+	}
+	return '0'
+}
+
+func leastCommon(oneCount int, zeroCount int) byte {
+	if oneCount >= zeroCount {
+		return '0'
+	}
+	return '1'
+}
+
+type getFilterFn func(oneCount int, zeroCount int) byte
+
+func getRating(report []string, getFilter getFilterFn) int64 {
 	candidates := report
 	position := 0
 	for len(candidates) > 1 {
-		candidates = filterCandidates(candidates, position, mostCommon, leastCommon)
+		candidates = filterCandidates(candidates, position, getFilter)
 		position++
 	}
 	binary := candidates[0]
@@ -66,7 +79,7 @@ func getRating(report []string, mostCommon byte, leastCommon byte) int64 {
 	return decimal
 }
 
-func filterCandidates(candidates []string, position int, mostCommon byte, leastCommon byte) []string {
+func filterCandidates(candidates []string, position int, getFilter getFilterFn) []string {
 	oneCount := 0
 	zeroCount := 0
 	for _, line := range candidates {
@@ -77,16 +90,11 @@ func filterCandidates(candidates []string, position int, mostCommon byte, leastC
 		}
 	}
 
-	var toKeep byte
-	if oneCount >= zeroCount {
-		toKeep = mostCommon
-	} else {
-		toKeep = leastCommon
-	}
+	filterVal := getFilter(oneCount, zeroCount)
 
 	filteredCandidates := []string{}
 	for _, line := range candidates {
-		if line[position] == toKeep {
+		if line[position] == filterVal {
 			filteredCandidates = append(filteredCandidates, line)
 		}
 	}
