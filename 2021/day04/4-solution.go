@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -10,14 +12,25 @@ import (
 const dimension = 5
 
 func main() {
-	input, _ := ioutil.ReadFile("4-input-example.txt")
-	draws, boards := parseInput(string(input))
+	input, _ := ioutil.ReadFile("4-input.txt")
 
-	fmt.Println("Part 1:", part1(draws, boards))
-	fmt.Println("Part 2:", part2(draws, boards))
+	part1Solution, err := part1(string(input))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		fmt.Println("Part 1:", part1Solution)
+	}
+
+	part2Solution, err := part2(string(input))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		fmt.Println("Part 2:", part2Solution)
+	}
 }
 
-func part1(draws []int, boards []Board) int {
+func part1(input string) (int, error) {
+	draws, boards := parseInput(input)
 	calledDraws := make(map[int]bool)
 	for _, draw := range draws {
 		calledDraws[draw] = true
@@ -30,30 +43,27 @@ func part1(draws []int, boards []Board) int {
 
 						if boards[boardIndex].RowMatches[rowIndex] == dimension ||
 							boards[boardIndex].ColumnMatches[columnIndex] == dimension {
-							return calculateScore(boards[boardIndex], calledDraws, draw)
+							return calculateScore(boards[boardIndex], calledDraws, draw), nil
 						}
 					}
 				}
 			}
 		}
 	}
-	return 0
+	return 0, errors.New("No solution")
 }
 
-func part2(draws []int, boards []Board) int {
+func part2(input string) (int, error) {
+	draws, boards := parseInput(input)
 	calledDraws := make(map[int]bool)
 	for _, draw := range draws {
-		// fmt.Println("Checking draw", draw)
 		calledDraws[draw] = true
 		for boardIndex := range boards {
-			// fmt.Println("Checking board", boardIndex)
 			if boards[boardIndex].Complete {
 				continue
 			}
 			for rowIndex, row := range boards[boardIndex].Numbers {
-				// fmt.Println("Checking row", rowIndex)
 				for columnIndex, num := range row {
-					// fmt.Println("Checking column", columnIndex)
 					if num == draw {
 						boards[boardIndex].RowMatches[rowIndex] += 1
 						boards[boardIndex].ColumnMatches[columnIndex] += 1
@@ -61,10 +71,15 @@ func part2(draws []int, boards []Board) int {
 						if boards[boardIndex].RowMatches[rowIndex] == dimension ||
 							boards[boardIndex].ColumnMatches[columnIndex] == dimension {
 							boards[boardIndex].Complete = true
+							completedBoards := []Board{}
+							for i := range boards {
+								if boards[i].Complete {
+									completedBoards = append(completedBoards, boards[i])
+								}
+							}
 
-							if len(boards) == 1 {
-								fmt.Println("Only one board left")
-								return 1
+							if len(completedBoards) == len(boards) {
+								return calculateScore(boards[boardIndex], calledDraws, draw), nil
 							}
 						}
 					}
@@ -72,7 +87,7 @@ func part2(draws []int, boards []Board) int {
 			}
 		}
 	}
-	return 0
+	return 0, errors.New("No solution")
 }
 
 func calculateScore(board Board, calledDraws map[int]bool, lastDraw int) int {
@@ -84,6 +99,7 @@ func calculateScore(board Board, calledDraws map[int]bool, lastDraw int) int {
 			}
 		}
 	}
+
 	return sum * lastDraw
 }
 
