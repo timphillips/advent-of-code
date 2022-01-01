@@ -3,7 +3,6 @@ type Line = { start: Point; end: Point };
 
 function part1(): number {
   const lines = parseInput();
-
   const overlaps: { [key: string]: number } = {};
 
   for (const line of lines) {
@@ -34,7 +33,6 @@ function part1(): number {
 
 function part2(): number {
   const lines = parseInput();
-
   const points: Point[] = [];
 
   for (const line of lines) {
