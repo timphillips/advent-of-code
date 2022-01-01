@@ -1,5 +1,7 @@
 const fs = require("fs");
 
+type Coordinate = { row: number; column: number };
+
 function part1(): number {
   const grid = parseInput();
 
@@ -9,7 +11,7 @@ function part1(): number {
   let flashes = 0;
 
   for (let step = 0; step < 100; step++) {
-    let increments: { row: number; column: number }[] = [];
+    let increments: Coordinate[] = [];
     for (let row = 0; row < height; row++) {
       for (let column = 0; column < width; column++) {
         grid[row][column] = grid[row][column] + 1;
@@ -20,7 +22,7 @@ function part1(): number {
     }
 
     while (increments.length) {
-      const newIncrements: { row: number; column: number }[] = [];
+      const newIncrements: Coordinate[] = [];
       for (const { row, column } of increments) {
         if (grid[row][column] === -1) {
           continue;
@@ -33,6 +35,7 @@ function part1(): number {
           newIncrements.push(...getNeighbours(row, column, width, height));
         }
       }
+
       increments = newIncrements;
     }
 
@@ -48,43 +51,87 @@ function part1(): number {
   return flashes;
 }
 
+function part2(): number {
+  const grid = parseInput();
+
+  const height = grid.length;
+  const width = grid[0].length;
+
+  let step = 0;
+
+  while (true) {
+    step++;
+
+    let increments: Coordinate[] = [];
+    for (let row = 0; row < height; row++) {
+      for (let column = 0; column < width; column++) {
+        grid[row][column] = grid[row][column] + 1;
+        if (grid[row][column] > 9) {
+          increments.push({ row, column });
+        }
+      }
+    }
+
+    while (increments.length) {
+      const newIncrements: Coordinate[] = [];
+      for (const { row, column } of increments) {
+        if (grid[row][column] === -1) {
+          continue;
+        }
+
+        grid[row][column] = grid[row][column] + 1;
+        if (grid[row][column] > 9) {
+          grid[row][column] = -1;
+          newIncrements.push(...getNeighbours(row, column, width, height));
+        }
+      }
+
+      increments = newIncrements;
+    }
+
+    let flashes = 0;
+    for (let row = 0; row < height; row++) {
+      for (let column = 0; column < width; column++) {
+        if (grid[row][column] === -1) {
+          flashes++;
+          grid[row][column] = 0;
+        }
+      }
+    }
+
+    if (flashes === width * height) {
+      return step;
+    }
+  }
+}
+
 function getNeighbours(
   row: number,
   column: number,
   width: number,
   height: number
 ): { row: number; column: number }[] {
-  const neighbours = [];
-  const leftEdge = column <= 0;
-  const topEdge = row <= 0;
-  const rightEdge = column >= width - 1;
-  const bottomEdge = row >= height - 1;
+  const neighbours = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, 1],
+    [0, -1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
 
-  if (!leftEdge && !topEdge) {
-    neighbours.push({ row: row - 1, column: column - 1 });
-  }
-  if (!topEdge) {
-    neighbours.push({ row: row - 1, column });
-  }
-  if (!rightEdge && !topEdge) {
-    neighbours.push({ row: row - 1, column: column + 1 });
-  }
-  if (!rightEdge) {
-    neighbours.push({ row, column: column + 1 });
-  }
-  if (!rightEdge && !bottomEdge) {
-    neighbours.push({ row: row + 1, column: column + 1 });
-  }
-  if (!bottomEdge) {
-    neighbours.push({ row: row + 1, column });
-  }
-  if (!leftEdge && !bottomEdge) {
-    neighbours.push({ row: row + 1, column: column - 1 });
-  }
-  if (!leftEdge) {
-    neighbours.push({ row, column: column - 1 });
-  }
-  return neighbours;
+  return neighbours
+    .map(([rowAdjustment, columnAdjustment]) => {
+      return {
+        row: row + rowAdjustment,
+        column: column + columnAdjustment,
+      };
+    })
+    .filter(({ row, column }) => {
+      return row >= 0 && row < height && column >= 0 && column < width;
+    });
 }
 
 function parseInput(): number[][] {
@@ -93,3 +140,4 @@ function parseInput(): number[][] {
 }
 
 console.log(part1());
+console.log(part2());
